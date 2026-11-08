@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>伤寒论经方学习工具</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body{
+    font-family:"KaiTi","STKaiti","Songti SC","SimSun",serif;
+    background:#f6f1e7; color:#3a2f25;
+    line-height:1.8; min-height:100vh;
+  }
+  header{
+    background:linear-gradient(135deg,#6b5b4b,#4a3c2e);
+    color:#f4ead5; padding:18px 20px; text-align:center;
+    box-shadow:0 2px 10px rgba(0,0,0,.2);
+  }
+  header h1{ font-size:24px; letter-spacing:6px; font-weight:normal; }
+  header p{ font-size:13px; opacity:.8; margin-top:4px; letter-spacing:2px; }
+
+  .tabs{
+    display:flex; justify-content:center; gap:6px;
+    padding:12px; flex-wrap:wrap; background:#efe6d3;
+    border-bottom:2px solid #cbb89a;
+  }
+  .tab{
+    padding:8px 16px; cursor:pointer; border-radius:20px;
+    font-size:15px; border:1px solid #cbb89a; background:#faf5ea;
+    color:#5a4a38; transition:.2s; font-family:inherit;
+  }
+  .tab:hover{ background:#e8dcc4; }
+  .tab.active{ background:#6b5b4b; color:#f4ead5; border-color:#6b5b4b; }
+
+  .container{ max-width:860px; margin:0 auto; padding:20px; }
+  .page{ display:none; }
+  .page.active{ display:block; animation:fade .3s; }
+  @keyframes fade{ from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+
+  /* 卡片 */
+  .card{
+    background:#fffdf8; border:1px solid #d8c9ad; border-radius:12px;
+    padding:26px; min-height:300px; box-shadow:0 4px 16px rgba(0,0,0,.06);
+    position:relative;
+  }
+  .card .num{ position:absolute; top:14px; right:18px; color:#b0a48c; font-size:13px; }
+  .card h2{
+    text-align:center; font-size:28px; color:#4a3c2e; margin:10px 0 18px;
+    letter-spacing:4px; font-weight:normal;
+  }
+  .card .answer{ display:none; }
+  .card .answer.show{ display:block; animation:fade .3s; }
+  .card .field{
+    margin:12px 0; padding:12px 16px; background:#faf5ea;
+    border-left:3px solid #b5985a; border-radius:4px;
+  }
+  .card .field .label{
+    font-weight:bold; color:#8a6d3b; margin-bottom:4px; font-size:15px;
+  }
+  .card .field .val{ font-size:16px; }
+
+  .btns{ text-align:center; margin:16px 0; display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+  button{
+    font-family:inherit; font-size:15px; padding:9px 20px; border-radius:8px;
+    border:1px solid #b5985a; background:#b5985a; color:#fff; cursor:pointer;
+    transition:.2s;
+  }
+  button:hover{ background:#8a6d3b; border-color:#8a6d3b; }
+  button.ghost{ background:#fffdf8; color:#8a6d3b; }
+  button.ghost:hover{ background:#f0e6d2; color:#5a4a38; }
+  button.small{ padding:5px 12px; font-size:13px; }
+  button:disabled{ opacity:.45; cursor:not-allowed; }
+
+  .progress{ text-align:center; color:#8a7a63; font-size:14px; margin-top:6px; }
+  .random-toggle{ text-align:center; margin-top:10px; font-size:14px; color:#6b5b4b; }
+  .random-toggle input{ transform:scale(1.2); margin-right:4px; }
+
+  /* 筛选 */
+  .filters{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; align-items:center; }
+  .filters select, .filters input{
+    font-family:inherit; font-size:14px; padding:6px 10px;
+    border:1px solid #cbb89a; border-radius:6px; background:#fffdf8; color:#3a2f25;
+  }
+  .filters input{ flex:1; min-width:140px; }
+
+  .list-item{
+    background:#fffdf8; border:1px solid #e0d3ba; border-radius:8px;
+    padding:12px 16px; margin:8px 0; cursor:pointer; transition:.2s;
+  }
+  .list-item:hover{ background:#f5ecda; border-color:#b5985a; }
+  .list-item .ln{ font-size:18px; color:#4a3c2e; }
+  .list-item .lbadge{
+    display:inline-block; font-size:12px; background:#e8dcc4; color:#8a6d3b;
+    padding:2px 8px; border-radius:10px; margin-left:8px;
+  }
+  .list-item .lw{
+    font-size:13px; color:#8a7a63; margin-top:4px;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+
+  /* 自测 */
+  .quiz-box{
+    background:#fffdf8; border:1px solid #d8c9ad; border-radius:12px;
+    padding:26px; text-align:center; min-height:240px;
+  }
+  .quiz-box .q-name{ font-size:30px; color:#4a3c2e; letter-spacing:5px; margin:16px 0; }
+  .quiz-box .q-fields{ text-align:left; margin:20px 0; }
+  .quiz-box .q-actions{ margin-top:16px; }
+
+  .stats{ display:flex; gap:14px; justify-content:center; margin:14px 0; flex-wrap:wrap; }
+  .stat-box{
+    background:#fffdf8; border:1px solid #d8c9ad; border-radius:8px;
+    padding:10px 18px; text-align:center; min-width:90px;
+  }
+  .stat-box .n{ font-size:24px; color:#b5985a; }
+  .stat-box .l{ font-size:13px; color:#8a7a63; }
+
+  .wrong-item{
+    background:#fffdf8; border:1px solid #e0d3ba; border-radius:8px;
+    padding:12px 16px; margin:8px 0; cursor:pointer;
+  }
+  .wrong-item .wi-head{ display:flex; justify-content:space-between; align-items:center; }
+  .wrong-item .wi-name{ font-size:17px; color:#4a3c2e; }
+  .wrong-item .wi-count{
+    font-size:12px; background:#e8c4c4; color:#a04040;
+    padding:2px 8px; border-radius:10px;
+  }
+  .wrong-item .wi-detail{ display:none; margin-top:10px; }
+  .wrong-item .wi-detail.show{ display:block; }
+  .wrong-item .wi-detail .field{
+    margin:8px 0; padding:8px 12px; background:#faf5ea; border-radius:4px; font-size:14px;
+  }
+
+  /* 默写 */
+  .dict-block{ margin:18px 0; }
+  .dict-block .dlabel{
+    font-weight:bold; color:#8a6d3b; margin-bottom:10px; font-size:16px;
+    border-bottom:1px dashed #cbb89a; padding-bottom:6px;
+  }
+  .dict-row{
+    display:flex; align-items:center; gap:10px; margin:8px 0; flex-wrap:wrap;
+    font-size:16px;
+  }
+  .dict-row .dn{ color:#b0a48c; width:26px; text-align:right; flex:none; }
+  .dict-row .dinput{
+    flex:1; min-width:180px; font-family:inherit; font-size:16px;
+    padding:7px 12px; border:1px solid #cbb89a; border-radius:6px;
+    background:#fff; color:#3a2f25;
+  }
+  .dict-row .dinput.ok{ border-color:#7fa86a; background:#f1f7ec; }
+  .dict-row .dinput.no{ border-color:#c47b7b; background:#fbf0f0; }
+  .dict-row .dres{ flex:none; font-size:15px; min-width:120px; }
+  .dict-row .dres.ok{ color:#5e8a4a; }
+  .dict-row .dres.no{ color:#a04040; }
+  .dict-row .dherb{
+    font-size:13px; color:#8a7a63; width:100%; padding-left:36px;
+  }
+  .dict-hint{
+    font-size:13px; color:#8a7a63; background:#faf5ea;
+    border:1px dashed #cbb89a; border-radius:6px; padding:8px 12px; margin:8px 0;
+  }
+  .result-banner{
+    text-align:center; padding:12px; border-radius:8px; margin:14px 0;
+    font-size:16px; display:none;
+  }
+  .result-banner.good{ display:block; background:#eef5e8; color:#5e8a4a; border:1px solid #bcd6ac; }
+  .result-banner.mid{ display:block; background:#fbf3e0; color:#a07a2a; border:1px solid #e6d3aa; }
+
+  /* 方歌 */
+  .song-card{
+    background:#fffdf8; border:1px solid #d8c9ad; border-radius:12px;
+    padding:26px; min-height:300px; text-align:center;
+  }
+  .song-card .s-name{ font-size:28px; color:#4a3c2e; letter-spacing:4px; margin-bottom:6px; }
+  .song-card .s-jing{ font-size:13px; color:#b0a48c; margin-bottom:22px; }
+  .song-line{
+    font-size:20px; color:#3a2f25; margin:12px 0; letter-spacing:1px;
+    line-height:2;
+  }
+  .song-line .blank{
+    display:inline-block; min-width:120px; border-bottom:2px solid #b5985a;
+    margin:0 4px; padding:0 6px; color:#b5985a; font-size:17px;
+  }
+  .song-line input{
+    font-family:inherit; font-size:18px; padding:4px 8px; width:150px;
+    border:1px solid #cbb89a; border-radius:6px; text-align:center; background:#fff;
+  }
+  .song-card .s-answer{ margin-top:20px; font-size:17px; color:#a04040; display:none; }
+  .song-card .s-actions{ margin-top:24px; }
+
+  .empty{ text-align:center; color:#8a7a63; padding:40px; font-size:15px; }
+  .tip{ font-size:13px; color:#8a7a63; text-align:center; margin-top:8px; }
+  footer{ text-align:center; color:#b0a48c; font-size:12px; padding:20px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>伤 寒 论 · 经 方</h1>
+  <p>原文 · 组成 · 功用 · 煎法 · 方歌 · 六经</p>
+</header>
+
+<div class="tabs">
+  <button class="tab active" data-p="study">学习模式</button>
+  <button class="tab" data-p="quiz">自测模式</button>
+  <button class="tab" data-p="dict">组成默写</button>
+  <button class="tab" data-p="song">方歌接句</button>
+  <button class="tab" data-p="wrong">错题本</button>
+  <button class="tab" data-p="list">条文目录</button>
+</div>
+
+<div class="container">
+
+  <!-- 学习模式 -->
+  <div class="page active" id="study">
+    <div class="card">
+      <div class="num" id="studyNum"></div>
+      <h2 id="studyName"></h2>
+      <div class="answer" id="studyAnswer"></div>
+    </div>
+    <div class="btns">
+      <button class="ghost small" id="prevBtn">← 上一条</button>
+      <button id="showBtn">显示答案</button>
+      <button class="ghost small" id="nextBtn">下一条 →</button>
+    </div>
+    <div class="random-toggle">
+      <input type="checkbox" id="randomMode"> <label for="randomMode">随机顺序</label>
+    </div>
+    <div class="progress" id="studyProgress"></div>
+  </div>
+
+  <!-- 自测模式 -->
+  <div class="page" id="quiz">
+    <div class="stats">
+      <div class="stat-box"><div class="n" id="qTotal">0</div><div class="l">本轮题数</div></div>
+      <div class="stat-box"><div class="n" id="qDone">0</div><div class="l">已答</div></div>
+      <div class="stat-box"><div class="n" id="qRight">0</div><div class="l">记住</div></div>
+      <div class="stat-box"><div class="n" id="qWrong">0</div><div class="l">未记住</div></div>
+    </div>
+    <div class="btns">
+      <input type="number" id="qCount" value="10" min="1" max="99" style="width:70px;font-family:inherit;font-size:15px;padding:6px;border:1px solid #cbb89a;border-radius:6px;background:#fffdf8;">
+      <button id="qStart">开始自测</button>
+      <button class="ghost" id="qOnlyWrong">只测错题</button>
+    </div>
+    <div class="quiz-box" id="quizBox">
+      <div class="empty">设置题数，点击「开始自测」<br><small>给出方名，先自己回忆，再点「看答案」核对</small></div>
+    </div>
+  </div>
+
+  <!-- 组成默写 -->
+  <div class="page" id="dict">
+    <div class="btns">
+      <button id="dStart">开始默写</button>
+      <button class="ghost" id="dCheck">核对答案</button>
+      <button class="ghost" id="dShowAll">显示全部答案</button>
+      <button class="ghost small" id="dPrev">← 上一首</button>
+      <button class="ghost small" id="dNext">下一首 →</button>
+    </div>
+    <div class="random-toggle">
+      <input type="checkbox" id="dRandom" checked> <label for="dRandom">随机抽方</label>
+      &nbsp;&nbsp;
+      <input type="checkbox" id="dBlank"> <label for="dBlank">盲默模式（不看提示）</label>
+    </div>
+    <div class="dict-block" id="dictBlock">
+      <div class="empty">点击「开始默写」抽一方，逐味写出药味与剂量<br><small>提示：可按方名/功用筛选范围（见条文目录的思路）</small></div>
+    </div>
+    <div class="result-banner" id="dictResult"></div>
+  </div>
+
+  <!-- 方歌接句 -->
+  <div class="page" id="song">
+    <div class="btns">
+      <button id="sStart">开始</button>
+      <button class="ghost" id="sReveal">揭晓答案</button>
+      <button class="ghost" id="sGot">记住了</button>
+      <button class="ghost" id="sForgot">没记住</button>
+    </div>
+    <div class="random-toggle">
+      <input type="checkbox" id="sBlankFirst" checked> <label for="sBlankFirst">挖空首句</label>
+      &nbsp;&nbsp;
+      <input type="checkbox" id="sBlankLast"> <label for="sBlankLast">挖空末句</label>
+    </div>
+    <div class="song-card" id="songCard">
+      <div class="empty">点击「开始」抽一首方歌接句<br><small>给你方名 + 上句，补出下句</small></div>
+    </div>
+  </div>
+
+  <!-- 错题本 -->
+  <div class="page" id="wrong">
+    <div class="btns">
+      <button id="wReview">复习全部错题</button>
+      <button class="ghost" id="wClear">清空错题本</button>
+    </div>
+    <div id="wrongList"></div>
+  </div>
+
+  <!-- 条文目录 -->
+  <div class="page" id="list">
+    <div class="filters">
+      <select id="fJing"><option value="">全部六经</option></select>
+      <input type="text" id="fSearch" placeholder="搜索方名或条文关键词…">
+    </div>
+    <div id="listBox"></div>
+  </div>
+
+</div>
+
+<footer>数据保存于本浏览器本地 · 关闭后不丢失 · 仅供学习参考</footer>
+
+<script src="data.js"></script>
+<script>
+/* 下面的代码你不用改 */
+
+// ---- 数据准备 ----
+const JING = ["太阳","阳明","少阳","太阴","少阴","厥阴","太阳少阳","阴阳易"];
+const fJing = document.getElementById('fJing');
+JING.forEach(j=>{
+  const o=document.createElement('option'); o.value=j; o.textContent=j; fJing.appendChild(o);
+});
+
+// 解析组成为 [{herb, dose}]，分隔符容忍逗号/顿号/空格
+function parseComp(comp){
+  if(!comp) return [];
+  // 先按顿号/逗号切成片
+  let parts = comp.split(/[、，,]/).map(s=>s.trim()).filter(Boolean);
+  return parts.map(p=>{
+    // 剂量通常在数字起头的部分，药名在前
+    const m = p.match(/^(.+?)\s*([零一二三四五六七八九十百千万两铢枚升个合把尺斤升]+.*)$/);
+    if(m){ return {herb:m[1].trim(), dose:m[2].trim()}; }
+    return {herb:p, dose:''};
+  });
+}
+
+// ---- 错题本（localStorage） ----
+const WRONG_KEY = 'shanghan_wrong_v1';
+function getWrong(){
+  try{ return JSON.parse(localStorage.getItem(WRONG_KEY)) || {}; }catch(e){ return {}; }
+}
+function saveWrong(w){ localStorage.setItem(WRONG_KEY, JSON.stringify(w)); }
+function addWrong(name){
+  const w = getWrong();
+  w[name] = (w[name]||0) + 1;
+  saveWrong(w);
+}
+function clearWrong(){ localStorage.removeItem(WRONG_KEY); renderWrong(); }
+
+// ---- 标签页切换 ----
+document.querySelectorAll('.tab').forEach(t=>{
+  t.onclick = ()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById(t.dataset.p).classList.add('active');
+    if(t.dataset.p==='wrong') renderWrong();
+    if(t.dataset.p==='list') renderList();
+  };
+});
+
+// ---- 通用：打乱 ----
+function shuffle(a){
+  const b=a.slice();
+  for(let i=b.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [b[i],b[j]]=[b[j],b[i]];
+  }
+  return b;
+}
+
+// ---- 学习模式 ----
+let studyIdx = 0;
+let studyOrder = DATA.map((_,i)=>i);
+const randomMode = document.getElementById('randomMode');
+
+function renderStudy(){
+  const d = DATA[studyOrder[studyIdx]];
+  document.getElementById('studyNum').textContent = '第 ' + (studyIdx+1) + ' / ' + DATA.length + ' 方';
+  document.getElementById('studyName').textContent = d.name;
+  const ans = document.getElementById('studyAnswer');
+  let h = '';
+  [['条文原文',d.text],['药物组成',d.comp],['功用',d.func],['煎法服法',d.deco]]
+    .forEach(([k,v])=>{
+      if(v) h += '<div class="field"><div class="label">'+k+'</div><div class="val">'+v+'</div></div>';
+    });
+  if(d.song) h += '<div class="field"><div class="label">方歌</div><div class="val">'+d.song+'</div></div>';
+  ans.innerHTML = h;
+  ans.classList.remove('show');
+  document.getElementById('showBtn').textContent = '显示答案';
+  document.getElementById('studyProgress').textContent = d.jing + '经 · 点击「显示答案」查看原文/组成/功用/煎法';
+}
+document.getElementById('showBtn').onclick = ()=>{
+  const ans = document.getElementById('studyAnswer');
+  const showing = ans.classList.toggle('show');
+  document.getElementById('showBtn').textContent = showing ? '隐藏答案' : '显示答案';
+};
+document.getElementById('nextBtn').onclick = ()=>{
+  if(randomMode.checked){ studyIdx = Math.floor(Math.random()*DATA.length); }
+  else { studyIdx = (studyIdx+1) % DATA.length; }
+  renderStudy();
+};
+document.getElementById('prevBtn').onclick = ()=>{
+  studyIdx = (studyIdx-1+DATA.length) % DATA.length;
+  renderStudy();
+};
+randomMode.onchange = ()=>{ studyOrder = randomMode.checked ? shuffle(DATA) : DATA.map((_,i)=>i); };
+
+// ---- 自测模式 ----
+let quizQueue = [];
+let quizIdx = 0;
+let quizStat = {done:0, right:0, wrong:0};
+
+function startQuiz(onlyWrong){
+  let pool = DATA;
+  if(onlyWrong){
+    const w = getWrong();
+    pool = DATA.filter(d=>w[d.name]);
+    if(pool.length===0){ alert('错题本还是空的，先去自测几道题吧'); return; }
+  }
+  let n = parseInt(document.getElementById('qCount').value)||10;
+  n = Math.min(n, pool.length);
+  quizQueue = shuffle(pool).slice(0, n);
+  quizIdx = 0;
+  quizStat = {done:0, right:0, wrong:0};
+  document.getElementById('qTotal').textContent = n;
+  renderQuiz();
+}
+function renderQuiz(){
+  document.getElementById('qDone').textContent = quizStat.done;
+  document.getElementById('qRight').textContent = quizStat.right;
+  document.getElementById('qWrong').textContent = quizStat.wrong;
+  const box = document.getElementById('quizBox');
+  if(quizIdx >= quizQueue.length){
+    box.innerHTML = '<div class="empty"><div style="font-size:20px;color:#b5985a;margin-bottom:10px;">本轮自测结束</div>'+
+      '记住 '+quizStat.right+' 题 / 未记住 '+quizStat.wrong+' 题<br>'+
+      '<small>未记住的方子已自动记入错题本</small></div>';
+    return;
+  }
+  const d = quizQueue[quizIdx];
+  let h = '<div class="q-name">'+d.name+'</div>';
+  h += '<div class="q-actions"><button id="qShow">看答案</button></div>';
+  h += '<div class="q-fields" id="qFields" style="display:none">';
+  [['条文原文',d.text],['药物组成',d.comp],['功用',d.func],['煎法服法',d.deco]].forEach(([k,v])=>{
+    if(v) h += '<div class="field"><div class="label">'+k+'</div><div class="val">'+v+'</div></div>';
+  });
+  if(d.song) h += '<div class="field"><div class="label">方歌</div><div class="val">'+d.song+'</div></div>';
+  h += '</div>';
+  h += '<div class="q-actions" id="qMark" style="display:none">'+
+       '<button class="ghost" id="qBad">没记住</button> <button id="qGood">记住了</button></div>';
+  box.innerHTML = h;
+  document.getElementById('qShow').onclick = ()=>{
+    document.getElementById('qFields').style.display = 'block';
+    document.getElementById('qMark').style.display = 'block';
+    document.getElementById('qShow').style.display = 'none';
+  };
+  document.getElementById('qGood').onclick = ()=>{ quizStat.done++; quizStat.right++; quizIdx++; renderQuiz(); };
+  document.getElementById('qBad').onclick = ()=>{
+    quizStat.done++; quizStat.wrong++; addWrong(d.name); quizIdx++; renderQuiz();
+  };
+}
+document.getElementById('qStart').onclick = ()=>startQuiz(false);
+document.getElementById('qOnlyWrong').onclick = ()=>startQuiz(true);
+
+// ---- 组成默写 ----
+const dictBlock = document.getElementById('dictBlock');
+const dictResult = document.getElementById('dictResult');
+let dictData = null;      // {name, jing, func, herbs:[{herb,dose}]}
+let dictPool = [];        // 可抽的方子（都有组成）
+let dictIdx = 0;
+
+function pickDictOne(){
+  dictPool = DATA.filter(d=>d.comp && d.comp.trim());
+  if(dictPool.length===0){ alert('没有可用数据'); return; }
+  if(document.getElementById('dRandom').checked){
+    dictIdx = Math.floor(Math.random()*dictPool.length);
+  }
+  const d = dictPool[dictIdx];
+  const herbs = parseComp(d.comp);
+  dictData = {name:d.name, jing:d.jing, func:d.func, herbs};
+  dictResult.className = 'result-banner';
+  dictResult.textContent = '';
+  renderDict();
+}
+function renderDict(){
+  const dd = dictData;
+  const blank = document.getElementById('dBlank').checked;
+  let h = '<div class="card" style="text-align:center">'+
+          '<div class="num">组成默写</div>'+
+          '<h2>'+dd.name+'</h2>'+
+          '<div style="font-size:14px;color:#8a7a63">'+dd.jing+'经 · '+ (dd.func||'') +'</div>'+
+          '</div>';
+  h += '<div class="dict-block"><div class="dlabel">逐味默写（药名 + 剂量）</div>';
+  dd.herbs.forEach((hb,i)=>{
+    h += '<div class="dict-row">'+
+         '<span class="dn">'+(i+1)+'</span>'+
+         '<input class="dinput" type="text" placeholder="'+(blank?'':hb.herb)+'" data-idx="'+i+'" data-key="herb">'+
+         '<input class="dinput" type="text" style="max-width:110px" placeholder="'+(blank?'':hb.dose)+'" data-idx="'+i+'" data-key="dose">'+
+         '<span class="dres" id="r'+i+'"></span>'+
+         '</div>';
+  });
+  h += '</div>';
+  h += '<div class="tip">答对标准宽松：药名含对即可、剂量数值一致即算对（单位自动忽略）</div>';
+  dictBlock.innerHTML = h;
+}
+function checkDict(){
+  if(!dictData){ alert('先点「开始默写」'); return; }
+  const dd = dictData;
+  let right=0, wrong=0;
+  dd.herbs.forEach((hb,i)=>{
+    const herbIn = document.querySelector('.dinput[data-idx="'+i+'"][data-key="herb"]');
+    const doseIn = document.querySelector('.dinput[data-idx="'+i+'"][data-key="dose"]');
+    const res = document.getElementById('r'+i);
+    const hOK = herbIn.value.replace(/\s/g,'') && hb.herb.replace(/\s/g,'').indexOf(herbIn.value.replace(/\s/g,''))>=0;
+    const dOK = doseOK(doseIn.value, hb.dose);
+    herbIn.classList.toggle('ok', hOK);
+    herbIn.classList.toggle('no', !hOK);
+    doseIn.classList.toggle('ok', dOK);
+    doseIn.classList.toggle('no', !dOK);
+    if(hOK && dOK){
+      res.textContent = '✓ 正确'; res.className = 'dres ok';
+      right++;
+    }else{
+      res.textContent = '✗ ' + hb.herb + ' ' + hb.dose;
+      res.className = 'dres no';
+      wrong++;
+    }
+  });
+  dictResult.className = 'result-banner ' + (wrong===0 ? 'good' : (wrong<=1?'mid':''));
+  dictResult.textContent = wrong===0
+    ? '全对！' + dd.herbs.length + '/' + dd.herbs.length + ' 味全部命中'
+    : '答对 '+right+' / '+dd.herbs.length+' 味，差 '+wrong+' 味，看红色提示补全';
+  if(wrong>0) addWrong(dd.name);
+}
+function doseOK(input, target){
+  if(!input || !target) return false;
+  // 只看数字与单位词（两/铢/枚/升/个/合/把/尺/斤），忽略汉字/空格差异
+  const a = input.replace(/[、，,\s]/g,'');
+  const b = target.replace(/[、，,\s]/g,'');
+  // 提取所有"数字+单位"片段
+  const seg = s=>{
+    const m=s.match(/\d+[\.·]?\d*[零一二三四五六七八九十百千万两铢枚升个合把尺斤]?/g)||[];
+    return m.map(x=>x.replace(/[^\d.]/g,'')).filter(Boolean).join(',');
+  };
+  return seg(a) === seg(b);
+}
+document.getElementById('dStart').onclick = ()=>{ pickDictOne(); };
+document.getElementById('dCheck').onclick = checkDict;
+document.getElementById('dShowAll').onclick = ()=>{
+  if(!dictData){ alert('先点「开始默写」'); return; }
+  const dd = dictData;
+  let h = '<div class="card" style="text-align:center"><div class="num">参考答案</div><h2>'+dd.name+'</h2></div>';
+  h += '<div class="dict-block"><div class="dlabel">药物组成（'+dd.herbs.length+' 味）</div>';
+  dd.herbs.forEach((hb,i)=>{
+    h += '<div class="dict-row"><span class="dn">'+(i+1)+'</span>'+
+         '<span style="font-size:16px">'+hb.herb+'　'+hb.dose+'</span></div>';
+  });
+  h += '</div>';
+  h += '<div class="tip">上方为原书组成，不同版本（如宋本/成本）剂量或有出入，以你所习版本为准</div>';
+  dictBlock.innerHTML = h;
+  dictResult.className = 'result-banner';
+};
+document.getElementById('dNext').onclick = ()=>{
+  if(document.getElementById('dRandom').checked){ dictIdx = Math.floor(Math.random()*Math.max(dictPool.length,1)); }
+  else { dictIdx = (dictIdx+1) % Math.max(dictPool.length,1); }
+  pickDictOne();
+};
+document.getElementById('dPrev').onclick = ()=>{
+  const n = Math.max(dictPool.length,1);
+  dictIdx = (dictIdx-1+n) % n;
+  pickDictOne();
+};
+document.getElementById('dBlank').onchange = ()=>{ if(dictData) renderDict(); };
+
+// ---- 方歌接句 ----
+const songCard = document.getElementById('songCard');
+let songQueue = [];
+let songIdx = 0;
+let songGot = 0, songMiss = 0;
+
+function getSongs(){
+  // 返回 [{name, jing, lines:[...]}]
+  return DATA.filter(d=>d.song).map(d=>({
+    name:d.name, jing:d.jing, lines:d.song.split(/[，。,\.]/).map(s=>s.trim()).filter(Boolean)
+  })).filter(s=>s.lines.length>=2);
+}
+function startSong(){
+  const all = getSongs();
+  if(all.length===0){ alert('数据里还没有方歌，先补充吧'); return; }
+  songQueue = shuffle(all);
+  songIdx = 0;
+  songGot = 0; songMiss = 0;
+  renderSong();
+}
+function renderSong(){
+  if(songIdx >= songQueue.length){
+    songCard.innerHTML = '<div class="empty"><div style="font-size:20px;color:#b5985a;margin-bottom:10px;">本轮方歌结束</div>'+
+      '记住 '+songGot+' 首 / 没记住 '+songMiss+' 首</div>';
+    return;
+  }
+  const s = songQueue[songIdx];
+  const blankFirst = document.getElementById('sBlankFirst').checked;
+  const blankLast = document.getElementById('sBlankLast').checked;
+  const last = s.lines.length-1;
+  let h = '<div class="s-name">'+s.name+'</div><div class="s-jing">'+s.jing+'经 · 补出空缺的一句</div>';
+  s.lines.forEach((ln,i)=>{
+    const isBlank = (blankFirst && i===0) || (blankLast && i===last);
+    if(isBlank){
+      h += '<div class="song-line"><input type="text" data-line="'+i+'" placeholder="这一句是什么？"></div>';
+    }else{
+      h += '<div class="song-line">'+ln+'</div>';
+    }
+  });
+  h += '<div class="s-answer" id="sAnswer"></div>';
+  h += '<div class="s-actions">'+
+       '<button id="sCheck">核对</button>'+
+       '<button class="ghost" id="sSkip">换一首</button></div>';
+  h += '<div class="stats" style="margin-top:20px">'+
+       '<div class="stat-box"><div class="n">'+songGot+'</div><div class="l">记住</div></div>'+
+       '<div class="stat-box"><div class="n">'+songMiss+'</div><div class="l">没记住</div></div></div>';
+  songCard.innerHTML = h;
+  document.getElementById('sCheck').onclick = ()=>checkSong(s);
+  document.getElementById('sSkip').onclick = ()=>{ songIdx++; renderSong(); };
+}
+function checkSong(s){
+  const ans = document.getElementById('sAnswer');
+  const blankFirst = document.getElementById('sBlankFirst').checked;
+  const blankLast = document.getElementById('sBlankLast').checked;
+  const last = s.lines.length-1;
+  let allOK = true;
+  s.lines.forEach((ln,i)=>{
+    const isBlank = (blankFirst && i===0) || (blankLast && i===last);
+    if(!isBlank) return;
+    const inp = document.querySelector('.song-line input[data-line="'+i+'"]');
+    if(!inp) return;
+    // 宽松匹配：去除标点空格后，包含关系即可
+    const a = inp.value.replace(/[\s，。、,.\?!！？]/g,'');
+    const b = ln.replace(/[\s，。、,.\?!！？]/g,'');
+    const ok = a.length>0 && (b.indexOf(a)>=0 || a.indexOf(b)>=0);
+    inp.style.borderColor = ok ? '#7fa86a' : '#c47b7b';
+    inp.style.background = ok ? '#f1f7ec' : '#fbf0f0';
+    if(!ok) allOK = false;
+  });
+  if(allOK){
+    ans.textContent = '✓ 对上了！' + s.lines.join('，');
+    ans.style.display = 'block';
+    ans.style.color = '#5e8a4a';
+  }else{
+    ans.textContent = '✗ 完整方歌：' + s.lines.join('，');
+    ans.style.display = 'block';
+    ans.style.color = '#a04040';
+  }
+}
+document.getElementById('sStart').onclick = startSong;
+document.getElementById('sReveal').onclick = ()=>{
+  if(songIdx >= songQueue.length){ alert('先点「开始」'); return; }
+  const s = songQueue[songIdx];
+  document.getElementById('sAnswer').textContent = '全歌：' + s.lines.join('，');
+  document.getElementById('sAnswer').style.display = 'block';
+  document.getElementById('sAnswer').style.color = '#8a6d3b';
+};
+document.getElementById('sGot').onclick = ()=>{
+  if(songIdx >= songQueue.length) return;
+  songGot++; songIdx++; renderSong();
+};
+document.getElementById('sForgot').onclick = ()=>{
+  if(songIdx >= songQueue.length) return;
+  songMiss++; addWrong(songQueue[songIdx].name); songIdx++; renderSong();
+};
+
+// ---- 错题本 ----
+function renderWrong(){
+  const w = getWrong();
+  const names = Object.keys(w).sort((a,b)=>w[b]-w[a]);
+  const box = document.getElementById('wrongList');
+  if(names.length===0){ box.innerHTML='<div class="empty">错题本还是空的<br><small>自测时点「没记住」的方子会出现在这里</small></div>'; return; }
+  let h = '<div class="empty" style="padding:10px">共 '+names.length+' 个方子需要巩固（按出错次数排序）</div>';
+  names.forEach(n=>{
+    const d = DATA.find(x=>x.name===n);
+    if(!d) return;
+    h += '<div class="wrong-item"><div class="wi-head"><span class="wi-name">'+d.name+
+         '</span><span class="wi-count">标记 '+w[n]+' 次</span></div>'+
+         '<div class="wi-detail"><div class="field"><b>原文</b> '+d.text+'</div>'+
+         '<div class="field"><b>组成</b> '+d.comp+'</div>'+
+         '<div class="field"><b>功用</b> '+d.func+'</div></div></div>';
+  });
+  box.innerHTML = h;
+  box.querySelectorAll('.wrong-item').forEach(el=>{
+    el.querySelector('.wi-name').onclick = ()=>{
+      el.querySelector('.wi-detail').classList.toggle('show');
+    };
+  });
+}
+document.getElementById('wReview').onclick = ()=>startQuiz(true);
+document.getElementById('wClear').onclick = ()=>{
+  if(confirm('确定清空错题本吗？此操作不可恢复')) clearWrong();
+};
+
+// ---- 条文目录 ----
+function renderList(){
+  const jing = fJing.value;
+  const kw = document.getElementById('fSearch').value.trim();
+  let res = DATA.filter(d=>{
+    if(jing && d.jing!==jing) return false;
+    if(kw){
+      const s = (d.name+d.text+d.comp+d.func).toLowerCase();
+      if(s.indexOf(kw.toLowerCase())<0) return false;
+    }
+    return true;
+  });
+  const box = document.getElementById('listBox');
+  if(res.length===0){ box.innerHTML='<div class="empty">没有符合条件的条文</div>'; return; }
+  let h = '<div class="empty" style="padding:6px">共 '+res.length+' 条</div>';
+  res.forEach(d=>{
+    h += '<div class="list-item" data-name="'+d.name+'"><div class="ln">'+d.name+
+         '<span class="lbadge">'+d.jing+'</span></div>'+
+         '<div class="lw">'+ (d.text||'').substring(0,40) +'…</div></div>';
+  });
+  box.innerHTML = h;
+  box.querySelectorAll('.list-item').forEach(el=>{
+    el.onclick = ()=>{
+      const target = DATA.findIndex(x=>x.name===el.dataset.name);
+      studyOrder = randomMode.checked ? shuffle(DATA) : DATA.map((_,i)=>i);
+      studyIdx = target;
+      renderStudy();
+      document.querySelector('[data-p="study"]').click();
+    };
+  });
+}
+fJing.onchange = renderList;
+document.getElementById('fSearch').oninput = renderList;
+
+// ---- 启动 ----
+renderStudy();
+</script>
+</body>
+</html>
